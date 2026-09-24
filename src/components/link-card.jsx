@@ -1,15 +1,16 @@
 /* eslint-disable react/prop-types */
-import {Copy, Download, LinkIcon, Trash} from "lucide-react";
-import {Link} from "react-router-dom";
-import {Button} from "./ui/button";
-import useFetch from "@/hooks/use-fetch";
-import {deleteUrl} from "@/db/apiUrls";
-import {BeatLoader} from "react-spinners";
 
-const LinkCard = ({url = [], fetchUrls}) => {
+import { Copy, Download, LinkIcon, Trash } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Button } from "./ui/button";
+import useFetch from "@/hooks/use-fetch";
+import { deleteUrl } from "@/db/apiUrls";
+import { BeatLoader } from "react-spinners";
+
+const LinkCard = ({ url = [], fetchUrls }) => {
   const downloadImage = () => {
     const imageUrl = url?.qr;
-    const fileName = url?.title; // Desired file name for the downloaded image
+    const fileName = url?.title;
 
     // Create an anchor element
     const anchor = document.createElement("a");
@@ -22,52 +23,85 @@ const LinkCard = ({url = [], fetchUrls}) => {
     // Trigger the download by simulating a click event
     anchor.click();
 
-    // Remove the anchor from the document
+    // Remove the document
     document.body.removeChild(anchor);
   };
 
-  const {loading: loadingDelete, fn: fnDelete} = useFetch(deleteUrl, url.id);
+  const { loading: loadingDelete, fn: fnDelete } =
+    useFetch(deleteUrl, url.id);
+
+  // Create short URL dynamically
+  const shortUrl = `${window.location.origin}/${
+    url?.custom_url || url?.short_url
+  }`;
 
   return (
     <div className="flex flex-col md:flex-row gap-5 border p-4 bg-gray-900 rounded-lg">
+      {/* QR Code */}
       <img
         src={url?.qr}
         className="h-32 object-contain ring ring-blue-500 self-start"
         alt="qr code"
       />
-      <Link to={`/link/${url?.id}`} className="flex flex-col flex-1">
+
+      <Link
+        to={`/link/${url?.id}`}
+        className="flex flex-col flex-1"
+      >
+        {/* Title */}
         <span className="text-3xl font-extrabold hover:underline cursor-pointer">
           {url?.title}
         </span>
+
+        {/* Dynamic short URL */}
         <span className="text-2xl text-blue-400 font-bold hover:underline cursor-pointer">
-          https://trimrr.in/{url?.custom_url ? url?.custom_url : url.short_url}
+          {shortUrl}
         </span>
+
+        {/* Original URL */}
         <span className="flex items-center gap-1 hover:underline cursor-pointer">
           <LinkIcon className="p-1" />
           {url?.original_url}
         </span>
+
+        {/* Created date */}
         <span className="flex items-end font-extralight text-sm flex-1">
           {new Date(url?.created_at).toLocaleString()}
         </span>
       </Link>
+
       <div className="flex gap-2">
+        {/* Copy */}
         <Button
           variant="ghost"
           onClick={() =>
-            navigator.clipboard.writeText(`https://trimrr.in/${url?.short_url}`)
+            navigator.clipboard.writeText(shortUrl)
           }
         >
           <Copy />
         </Button>
-        <Button variant="ghost" onClick={downloadImage}>
-          <Download />
-        </Button>
+
+        {/* Download QR */}
         <Button
           variant="ghost"
-          onClick={() => fnDelete().then(() => fetchUrls())}
-          disable={loadingDelete}
+          onClick={downloadImage}
         >
-          {loadingDelete ? <BeatLoader size={5} color="white" /> : <Trash />}
+          <Download />
+        </Button>
+
+        {/* Delete */}
+        <Button
+          variant="ghost"
+          onClick={() =>
+            fnDelete().then(() => fetchUrls())
+          }
+          disabled={loadingDelete}
+        >
+          {loadingDelete ? (
+            <BeatLoader size={5} color="white" />
+          ) : (
+            <Trash />
+          )}
         </Button>
       </div>
     </div>
